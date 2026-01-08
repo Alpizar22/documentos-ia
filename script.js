@@ -1,4 +1,4 @@
-const API_URL = "https://wy28p8c6f7.execute-api.us-east-2.amazonaws.com/presign";
+const API_URL = "https://wy28p8c6f7.execute-api.us-east-2.amazonaws.com/prod/presign";
 
 async function subirDocumento() {
   const input = document.getElementById("fileInput");
