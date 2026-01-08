@@ -1,39 +1,27 @@
-const API_URL = "https://wy28p8c6f7.execute-api.us-east-2.amazonaws.com/prod/presign";
+async function esperarResultado(documentId) {
+  const statusEl = document.getElementById("status");
 
-async function subirDocumento() {
-  const input = document.getElementById("fileInput");
-  const status = document.getElementById("status");
+  const interval = setInterval(async () => {
+    const res = await fetch(
+      `https://wy28p8c6f7.execute-api.us-east-2.amazonaws.com/prod/status?documentId=${encodeURIComponent(documentId)}`
+    );
 
-  if (!input.files.length) {
-    alert("Selecciona un archivo");
-    return;
-  }
+    const data = await res.json();
 
-  const file = input.files[0];
-  status.innerText = "⏳ Solicitando autorización...";
+    if (data.status === "PENDIENTE") {
+      statusEl.innerText = "⏳ Validando documento...";
+      return;
+    }
 
-  const presignResponse = await fetch(API_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      filename: file.name,
-      contentType: file.type
-    })
-  });
+    clearInterval(interval);
 
-  const data = await presignResponse.json();
-
-  status.innerText = "📤 Subiendo documento...";
-
-  await fetch(data.uploadUrl, {
-    method: "PUT",
-    headers: {
-      "Content-Type": file.type
-    },
-    body: file
-  });
-
-  status.innerText = "✅ Documento enviado y en validación.";
+    if (data.status === "APROBADO") {
+      statusEl.innerText = "✅ Documento APROBADO";
+    } else if (data.status === "RECHAZADO") {
+      statusEl.innerText =
+        "❌ Documento RECHAZADO:\n" + data.errors.join("\n");
+    } else {
+      statusEl.innerText = "⚠️ Error inesperado";
+    }
+  }, 3000);
 }
