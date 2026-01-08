@@ -39,7 +39,7 @@ async function subirDocumento() {
 
   status.innerText = "⏳ Validando documento...";
 
-  // 3️⃣ Empezar polling
+  // 3️⃣ Polling
   esperarResultado(presignData.documentId);
 }
 
@@ -67,12 +67,6 @@ async function esperarResultado(documentId) {
         "❌ Documento RECHAZADO:\n" + (data.errors || []).join("\n");
     } else {
       status.innerText = "⚠️ Estado desconocido";
-    }
-  }, 3000);
-}
-
-    } else {
-      statusEl.innerText = "⚠️ Error inesperado";
     }
   }, 3000);
 }
