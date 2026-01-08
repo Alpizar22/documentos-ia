@@ -53,9 +53,9 @@ async function esperarResultado(documentId) {
 
     const data = await response.json();
 
-    if (data.status === "PENDIENTE") {
-      status.innerText = "⏳ Validando documento...";
-      return;
+    status.innerText = `⏳ Estado actual: ${data.status}`;
+      if (data.status === "PENDIENTE") {
+        return;
     }
 
     clearInterval(interval);
