@@ -12,28 +12,28 @@ async function subirDocumento() {
   const file = input.files[0];
   status.innerText = "⏳ Solicitando autorización...";
 
-  // 1. Pedir URL prefirmada
   const presignResponse = await fetch(API_URL, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json"
+    },
     body: JSON.stringify({
       filename: file.name,
       contentType: file.type
     })
   });
 
-  const { uploadUrl, documentId } = await presignResponse.json();
+  const data = await presignResponse.json();
 
-  // 2. Subir archivo directo a S3
   status.innerText = "📤 Subiendo documento...";
 
-  await fetch(uploadUrl, {
+  await fetch(data.uploadUrl, {
     method: "PUT",
-    headers: { "Content-Type": file.type },
+    headers: {
+      "Content-Type": file.type
+    },
     body: file
   });
 
-  status.innerText = `✅ Documento enviado.
-ID: ${documentId}
-Procesando validación...`;
+  status.innerText = "✅ Documento enviado y en validación.";
 }
