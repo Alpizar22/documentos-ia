@@ -2,10 +2,14 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Validador de Documentos Oficiales</title>
+  <title>Validador y Transcriptor de Documentos</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
+  <!-- ========================= -->
+  <!-- VALIDADOR DE DOCUMENTOS -->
+  <!-- ========================= -->
 
   <h1>📄 Validador de Documentos Oficiales</h1>
   <p>Sube tu documento y el sistema lo validará automáticamente.</p>
@@ -16,7 +20,23 @@
 
   <p id="status"></p>
 
+  <hr>
+
+  <!-- ========================= -->
+  <!-- TRANSCRIPCIÓN DE FACTURAS -->
+  <!-- ========================= -->
+
+  <h2>📊 Transcripción de Facturas</h2>
+  <p>Sube una factura en PDF y descarga el Excel con el desglose.</p>
+
+  <input type="file" id="invoiceInput" accept="application/pdf">
+  <br><br>
+  <button onclick="procesarFactura()">Procesar factura</button>
+
+  <p id="invoiceStatus"></p>
+
   <script src="script.js"></script>
 </body>
 </html>
+
 
