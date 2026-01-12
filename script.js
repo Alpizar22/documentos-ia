@@ -1,5 +1,9 @@
 const API_BASE = "https://wy28p8c6f7.execute-api.us-east-2.amazonaws.com/prod";
 
+/* =========================
+   VALIDADOR DE DOCUMENTOS
+   ========================= */
+
 async function subirDocumento() {
   const input = document.getElementById("fileInput");
   const status = document.getElementById("status");
@@ -12,12 +16,9 @@ async function subirDocumento() {
   const file = input.files[0];
   status.innerText = "⏳ Solicitando autorización...";
 
-  // 1️⃣ Pedir URL prefirmada
   const presignResponse = await fetch(`${API_BASE}/presign`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       filename: file.name,
       contentType: file.type
@@ -28,18 +29,14 @@ async function subirDocumento() {
 
   status.innerText = "📤 Subiendo documento...";
 
-  // 2️⃣ Subir a S3
   await fetch(presignData.uploadUrl, {
     method: "PUT",
-    headers: {
-      "Content-Type": file.type
-    },
+    headers: { "Content-Type": file.type },
     body: file
   });
 
   status.innerText = "⏳ Validando documento...";
 
-  // 3️⃣ Polling
   esperarResultado(presignData.documentId);
 }
 
@@ -54,9 +51,8 @@ async function esperarResultado(documentId) {
     const data = await response.json();
 
     status.innerText = `⏳ Estado actual: ${data.status}`;
-      if (data.status === "PENDIENTE") {
-        return;
-    }
+
+    if (data.status === "PENDIENTE") return;
 
     clearInterval(interval);
 
@@ -68,5 +64,55 @@ async function esperarResultado(documentId) {
     } else {
       status.innerText = "⚠️ Estado desconocido";
     }
-  }, 3000);
+  }, 1500);
+}
+
+/* =========================
+   TRANSCRIPCIÓN DE FACTURAS
+   ========================= */
+
+async function procesarFactura() {
+  const input = document.getElementById("invoiceInput");
+  const status = document.getElementById("invoiceStatus");
+
+  if (!input.files.length) {
+    alert("Selecciona un PDF");
+    return;
+  }
+
+  const file = input.files[0];
+  status.innerText = "📤 Subiendo factura...";
+
+  // 1️⃣ Presigned URL
+  const presign = await fetch(`${API_BASE}/presign`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      filename: file.name,
+      contentType: file.type
+    })
+  }).then(r => r.json());
+
+  // 2️⃣ Subir PDF
+  await fetch(presign.uploadUrl, {
+    method: "PUT",
+    headers: { "Content-Type": file.type },
+    body: file
+  });
+
+  status.innerText = "🧠 Procesando factura...";
+
+  // 3️⃣ Llamar Lambda transcriptor
+  const result = await fetch(`${API_BASE}/invoice`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      key: presign.documentId
+    })
+  }).then(r => r.json());
+
+  status.innerHTML = `
+    ✅ Factura procesada<br>
+    <a href="${result.downloadUrl}" target="_blank">⬇️ Descargar Excel</a>
+  `;
 }
