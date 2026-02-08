@@ -102,17 +102,24 @@ async function procesarFactura() {
 
   status.innerText = "🧠 Procesando factura...";
 
-  // 3️⃣ Llamar Lambda transcriptor
-  const result = await fetch(`${API_BASE}/invoice`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      key: presign.documentId
-    })
-  }).then(r => r.json());
+// 3️⃣ Llamar Lambda transcriptor
+const response = await fetch(`${API_BASE}/invoice`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    key: presign.documentId
+  })
+});
 
+const result = await response.json();
+console.log("Respuesta de AWS:", result); // <-- ESTO ES CLAVE PARA DEBUGEAR
+
+if (result.downloadUrl) {
   status.innerHTML = `
     ✅ Factura procesada<br>
-    <a href="${result.downloadUrl}" target="_blank">⬇️ Descargar Excel</a>
+    <a href="${result.downloadUrl}" target="_blank" style="color: blue; font-weight: bold;">⬇️ Descargar Excel</a>
   `;
+} else {
+  status.innerText = "❌ Error: No se recibió el enlace de descarga.";
+  console.error("Resultado sin downloadUrl:", result);
 }
