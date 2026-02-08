@@ -27,7 +27,6 @@ async function subirDocumento() {
     });
 
     const presignData = await presignResponse.json();
-
     status.innerText = "📤 Subiendo documento...";
 
     await fetch(presignData.uploadUrl, {
@@ -37,7 +36,6 @@ async function subirDocumento() {
     });
 
     status.innerText = "⏳ Validando documento...";
-
     esperarResultado(presignData.documentId);
   } catch (error) {
     console.error("Error en validador:", error);
@@ -55,7 +53,6 @@ async function esperarResultado(documentId) {
       );
 
       const data = await response.json();
-
       status.innerText = `⏳ Estado actual: ${data.status}`;
 
       if (data.status === "PENDIENTE") return;
@@ -65,8 +62,7 @@ async function esperarResultado(documentId) {
       if (data.status === "APROBADO") {
         status.innerText = "✅ Documento APROBADO";
       } else if (data.status === "RECHAZADO") {
-        status.innerText =
-          "❌ Documento RECHAZADO:\n" + (data.errors || []).join("\n");
+        status.innerText = "❌ Documento RECHAZADO:\n" + (data.errors || []).join("\n");
       } else {
         status.innerText = "⚠️ Estado desconocido";
       }
@@ -84,6 +80,12 @@ async function procesarFactura() {
   const input = document.getElementById("invoiceInput");
   const status = document.getElementById("invoiceStatus");
 
+  // Verificar que los elementos existan en el HTML
+  if (!input || !status) {
+    console.error("No se encontraron los elementos invoiceInput o invoiceStatus en el HTML");
+    return;
+  }
+
   if (!input.files.length) {
     alert("Selecciona un PDF");
     return;
@@ -92,9 +94,10 @@ async function procesarFactura() {
   const file = input.files[0];
 
   try {
+    console.log("Iniciando proceso para:", file.name);
     status.innerText = "📤 Subiendo factura...";
 
-    // 1️⃣ Obtener Presigned URL
+    // 1️⃣ Presigned URL
     const presignResponse = await fetch(`${API_BASE}/presign`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -103,9 +106,11 @@ async function procesarFactura() {
         contentType: file.type
       })
     });
+    
+    if (!presignResponse.ok) throw new Error("Error en presign");
     const presign = await presignResponse.json();
 
-    // 2️⃣ Subir PDF a S3
+    // 2️⃣ Subir PDF
     await fetch(presign.uploadUrl, {
       method: "PUT",
       headers: { "Content-Type": file.type },
@@ -114,7 +119,7 @@ async function procesarFactura() {
 
     status.innerText = "🧠 Procesando factura...";
 
-    // 3️⃣ Llamar Lambda transcriptor (la que devuelve el Excel)
+    // 3️⃣ Llamar Lambda transcriptor
     const response = await fetch(`${API_BASE}/invoice`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -126,20 +131,17 @@ async function procesarFactura() {
     const result = await response.json();
     console.log("Respuesta de AWS:", result);
 
-    // 4️⃣ Mostrar enlace de descarga
-    // Usamos result.downloadUrl porque así lo definiste en el return de tu Python
     if (result.downloadUrl) {
       status.innerHTML = `
         ✅ Factura procesada<br>
         <a href="${result.downloadUrl}" target="_blank" style="color: blue; font-weight: bold; text-decoration: underline;">⬇️ Descargar Excel</a>
       `;
     } else {
-      status.innerText = "❌ Error: No se recibió el enlace de descarga.";
-      console.error("Resultado sin URL:", result);
+      status.innerText = "❌ Error: No se recibió enlace de descarga.";
     }
-    
+
   } catch (error) {
-    console.error("Error procesando factura:", error);
-    status.innerText = "❌ Ocurrió un error en el proceso.";
+    console.error("Error detallado:", error);
+    status.innerText = "❌ Ocurrió un error. Revisa la consola (F12).";
   }
 }
